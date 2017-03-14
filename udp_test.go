@@ -37,7 +37,7 @@ func TestServer(t *testing.T) {
 	assert := assert.New(t)
 
 	server := NewUDPServer()
-	err := server.Listen("127.0.0.1", 6654)
+	err := server.Listen("127.0.0.1:6654")
 	assert.Nil(err, "Failed to start server")
 
 	conn, err := net.Dial("udp", "127.0.0.1:6654")
@@ -91,8 +91,8 @@ func TransportData(assert *assert.Assertions, data []byte, port int) {
 	server := NewUDPServer()
 	client := NewUDPClient()
 
+	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	go func() {
-		addr := fmt.Sprintf("127.0.0.1:%v", port)
 		err = client.Connect(addr)
 		assert.Nil(err, "Failed to connect to server")
 
@@ -103,7 +103,7 @@ func TransportData(assert *assert.Assertions, data []byte, port int) {
 		//client.Close()
 	}()
 
-	err = server.Listen("127.0.0.1", port)
+	err = server.Listen(addr)
 	assert.Nil(err, "Failed to listen for connections", err)
 
 	rcvData, err := server.ReadBytes()

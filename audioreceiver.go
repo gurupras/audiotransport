@@ -64,9 +64,9 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 	return
 }
 
-func (ar *AudioReceiver) Listen(host string, port int) (err error) {
+func (ar *AudioReceiver) Listen(addr string) (err error) {
 	ar.Lock()
-	err = ar.UdpServer.Listen(host, port)
+	err = ar.UdpServer.Listen(addr)
 	ar.Unlock()
 	return
 }
