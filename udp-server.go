@@ -1,6 +1,10 @@
 package audiotransport
 
-import "github.com/xtaci/kcp-go"
+import (
+	"fmt"
+
+	"github.com/xtaci/kcp-go"
+)
 
 type UdpServer struct {
 	*Transport
@@ -21,6 +25,7 @@ func (server *UdpServer) Listen(addr string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Received connection from: %v", conn.RemoteAddr())
 	server.Conn = conn
 	return err
 }
