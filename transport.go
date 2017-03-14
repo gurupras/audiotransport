@@ -5,12 +5,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"net"
 	"os"
+
+	"github.com/xtaci/kcp-go"
 )
 
 type Transport struct {
-	net.Conn
+	*kcp.UDPSession
 }
 
 const MAGIC string = "@@$!@@#@@@"
@@ -29,7 +30,7 @@ func (transport *Transport) ReadBytes() (data []byte, err error) {
 	fmt.Printf("Attempting to read %d bytes\n", size)
 	data = make([]byte, size)
 
-	n, err = transport.Conn.Read(data)
+	n, err = transport.UDPSession.Read(data)
 	fmt.Println("Read:", len(data))
 	return
 }
@@ -55,11 +56,11 @@ func (transport *Transport) WriteBytes(bytes []byte) (n int, err error) {
 	// The protocol is to first write the length and then the bytes itself
 	lengthBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lengthBytes, uint32(len(bytes)))
-	if n, err = transport.Conn.Write(lengthBytes); err != nil {
+	if n, err = transport.UDPSession.Write(lengthBytes); err != nil {
 		err = errors.New(fmt.Sprintf("Failed to write length on transport: %v", err))
 		return
 	}
-	n, err = transport.Conn.Write(bytes)
+	n, err = transport.UDPSession.Write(bytes)
 	fmt.Printf("Wrote %d bytes\n", n)
 	return
 }

@@ -21,11 +21,11 @@ func (server *UdpServer) Listen(addr string) error {
 	if err != nil {
 		return err
 	}
-	conn, err := listener.Accept()
+	conn, err := listener.AcceptKCP()
 	if err != nil {
 		return err
 	}
 	fmt.Println("Received connection from: %v", conn.RemoteAddr())
-	server.Conn = conn
+	server.UDPSession = conn
 	return err
 }

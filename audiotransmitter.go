@@ -7,10 +7,11 @@ import (
 	"sync"
 
 	"github.com/gurupras/audiotransport/alsa"
+	"github.com/xtaci/kcp-go"
 )
 
 type AudioTransmitter struct {
-	*UdpClient
+	*Transport
 	sync.Mutex
 	Name            string
 	Device          string
@@ -27,9 +28,9 @@ func NewAudioTransmitter(name string, device string, samplerate int32, channels 
 	}
 
 	at := &AudioTransmitter{}
+	at.Transport = &Transport{}
 	at.Name = name
 	at.Device = device
-	at.UdpClient = NewUDPClient()
 	at.PulseCaptureIdx = idx
 	at.initialize(samplerate, channels)
 	return at
@@ -41,7 +42,7 @@ func (at *AudioTransmitter) initialize(samplerate int32, channels int32) {
 }
 
 func (at *AudioTransmitter) BeginTransmission() (err error) {
-	if at.UdpClient.Conn == nil {
+	if at.UDPSession == nil {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
@@ -50,18 +51,20 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 	for {
 		alsa.Pa_handle_read(at.PulseCaptureIdx, &buf, size)
 		at.Lock()
+		fmt.Printf("Attempting to send %d bytes\n", len(buf))
 		if _, err = at.WriteBytes(buf); err != nil {
 			err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
 			return
 		}
 		at.Unlock()
+		fmt.Printf("Sent %d bytes\n", len(buf))
 	}
 	return
 }
 
 func (at *AudioTransmitter) Connect(addr string) (err error) {
 	at.Lock()
-	err = at.UdpClient.Connect(addr)
+	at.UDPSession, err = kcp.DialWithOptions(addr, nil, 10, 3)
 	at.Unlock()
 	return
 }

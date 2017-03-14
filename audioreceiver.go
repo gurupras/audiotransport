@@ -7,10 +7,11 @@ import (
 	"sync"
 
 	"github.com/gurupras/audiotransport/alsa"
+	"github.com/xtaci/kcp-go"
 )
 
 type AudioReceiver struct {
-	*UdpServer
+	*Transport
 	sync.Mutex
 	Name             string
 	Device           string
@@ -27,9 +28,9 @@ func NewAudioReceiver(name string, device string, samplerate int32, channels int
 	}
 
 	ar := &AudioReceiver{}
+	ar.Transport = &Transport{}
 	ar.Name = name
 	ar.Device = device
-	ar.UdpServer = NewUDPServer()
 	ar.PulsePlaybackIdx = idx
 	ar.initialize(samplerate, channels)
 	return ar
@@ -41,7 +42,7 @@ func (ar *AudioReceiver) initialize(samplerate int32, channels int32) {
 }
 
 func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error) {
-	if ar.UdpServer.Conn == nil {
+	if ar.UDPSession == nil {
 		err = errors.New("Cannot begin reception before connection to transmitter is established")
 		return
 	}
@@ -65,8 +66,9 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 }
 
 func (ar *AudioReceiver) Listen(addr string) (err error) {
+	listener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
 	ar.Lock()
-	err = ar.UdpServer.Listen(addr)
+	ar.UDPSession, err = listener.AcceptKCP()
 	ar.Unlock()
 	return
 }

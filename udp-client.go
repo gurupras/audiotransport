@@ -17,6 +17,6 @@ func (client *UdpClient) Connect(addr string) error {
 	if err != nil {
 		return err
 	}
-	client.Conn = conn
+	client.UDPSession = conn
 	return err
 }

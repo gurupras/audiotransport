@@ -12,10 +12,9 @@ import (
 func TestTransmitter(t *testing.T) {
 	assert := assert.New(t)
 
-	at := NewAudioTransmitter("TestTransmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2)
-	assert.NotNil(at, "Failed to initialize audio transmitter")
-
 	go func() {
+		at := NewAudioTransmitter("TestTransmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2)
+		assert.NotNil(at, "Failed to initialize audio transmitter")
 		err := at.Connect("127.0.0.1:6556")
 		assert.Nil(err, "Failed to connect to server", err)
 		err = at.BeginTransmission()
