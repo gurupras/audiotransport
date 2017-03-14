@@ -1,0 +1,9 @@
+!.gitignore
+
+.*.sw*
+*.so
+*.o
+*.a
+
+/alsa-bindings/playback
+*.test
