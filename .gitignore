@@ -5,5 +5,10 @@
 *.o
 *.a
 
+# Programs
 /alsa-bindings/playback
+/receiver/receiver
+/transmitter/transmitter
+
 *.test
+
