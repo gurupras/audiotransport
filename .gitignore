@@ -9,6 +9,8 @@
 /alsa-bindings/playback
 /receiver/receiver
 /transmitter/transmitter
+/kcp-client/kcp-client
+/kcp-server/kcp-server
 
 *.test
 
