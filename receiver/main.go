@@ -21,6 +21,7 @@ func setupParser() {
 	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
 }
 func main() {
+	setupParser()
 	kingpin.Parse()
 	var err error
 
