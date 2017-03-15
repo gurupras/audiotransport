@@ -107,6 +107,6 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 		}
 		wg.Wait()
 	}
-	log.Info("Received connection from:", conn.RemoteAddr())
+	log.Info("Received connection from:", ar.Transport.RemoteAddr())
 	return
 }
