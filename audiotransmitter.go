@@ -42,7 +42,7 @@ func (at *AudioTransmitter) initialize(samplerate int32, channels int32) {
 }
 
 func (at *AudioTransmitter) BeginTransmission() (err error) {
-	if at.UDPSession == nil {
+	if at.Conn == nil {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
@@ -64,7 +64,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 
 func (at *AudioTransmitter) Connect(addr string) (err error) {
 	at.Lock()
-	at.UDPSession, err = kcp.DialWithOptions(addr, nil, 10, 3)
+	at.Conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
 	at.Unlock()
 	return
 }

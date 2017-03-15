@@ -26,6 +26,6 @@ func (server *UdpServer) Listen(addr string) error {
 		return err
 	}
 	fmt.Println("Received connection from: %v", conn.RemoteAddr())
-	server.UDPSession = conn
+	server.Conn = conn
 	return err
 }

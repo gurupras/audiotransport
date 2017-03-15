@@ -42,7 +42,7 @@ func (ar *AudioReceiver) initialize(samplerate int32, channels int32) {
 }
 
 func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error) {
-	if ar.UDPSession == nil {
+	if ar.Conn == nil {
 		err = errors.New("Cannot begin reception before connection to transmitter is established")
 		return
 	}
@@ -68,7 +68,7 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 func (ar *AudioReceiver) Listen(addr string) (err error) {
 	listener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
 	ar.Lock()
-	ar.UDPSession, err = listener.AcceptKCP()
+	ar.Conn, err = listener.AcceptKCP()
 	ar.Unlock()
 	return
 }
