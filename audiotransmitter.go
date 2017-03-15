@@ -65,16 +65,27 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 
 func (at *AudioTransmitter) Connect(proto string, addr string) (err error) {
 	var conn net.Conn
+
 	at.Lock()
 	defer at.Unlock()
 	switch proto {
 	case "tcp":
 		conn, err = net.Dial("tcp", addr)
-	case "udp":
+		transport := &BaseTransport{}
+		transport.Conn = conn
+		at.Transport = transport
+	case "kcp":
 		conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
+		transport := &BaseTransport{}
+		transport.Conn = conn
+		at.Transport = transport
+	case "udp":
+		var transport Transport
+		client := NewUDPClient()
+		if transport, err = client.Connect(addr); err != nil {
+			return
+		}
+		at.Transport = transport
 	}
-	transport := &BaseTransport{}
-	transport.Conn = conn
-	at.Transport = transport
 	return
 }

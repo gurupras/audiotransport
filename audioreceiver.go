@@ -81,17 +81,32 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 			return
 		}
 		conn, err = listener.Accept()
+		transport := &BaseTransport{}
+		transport.Conn = conn
+		ar.Transport = transport
 
-	case "udp":
+	case "kcp":
 		if kcpListener, err = kcp.ListenWithOptions(addr, nil, 10, 3); err != nil {
 			return
 		} else {
 			conn, err = kcpListener.AcceptKCP()
 		}
+		transport := &BaseTransport{}
+		transport.Conn = conn
+		ar.Transport = transport
+	case "udp":
+		server := NewUDPServer()
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		callback := func(transport Transport) {
+			defer wg.Done()
+			ar.Transport = transport
+		}
+		if err = server.Listen(addr, callback); err != nil {
+			return
+		}
+		wg.Wait()
 	}
-	transport := &BaseTransport{}
-	transport.Conn = conn
-	ar.Transport = transport
 	log.Info("Received connection from:", conn.RemoteAddr())
 	return
 }

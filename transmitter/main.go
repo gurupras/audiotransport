@@ -32,7 +32,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}
-	fmt.Println("Connected to remote receiver:", audioTransmitter.Conn.RemoteAddr())
+	fmt.Println("Connected to remote receiver:", audioTransmitter.RemoteAddr())
 
 	audioTransmitter.BeginTransmission()
 }
