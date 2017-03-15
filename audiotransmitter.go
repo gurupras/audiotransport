@@ -47,7 +47,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
-	size := at.samplerate
+	size := at.samplerate / 2
 	buf := make([]byte, size)
 	for {
 		alsa.Pa_handle_read(at.PulseCaptureIdx, &buf, size)
