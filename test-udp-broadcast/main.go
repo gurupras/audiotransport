@@ -27,6 +27,7 @@ func setupParser() {
 	app = kingpin.New("udp-chat", "Test application for UDP")
 	serverCmd = app.Command("server", "server-mode")
 	clientCmd = app.Command("client", "client-mode")
+	clientAddr = clientCmd.Arg("server-address", "server address").Required().String()
 }
 
 func server(addr string) {
@@ -38,7 +39,7 @@ func server(addr string) {
 			fmt.Printf("Client: %s\n", string(data))
 		}
 	}
-	if err := server.Listen("0.0.0.0:20000", callback); err != nil {
+	if err := server.Listen("0.0.0.0:6554", callback); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
@@ -47,7 +48,7 @@ func server(addr string) {
 
 func client(addr string) {
 	client := audiotransport.NewUDPClient()
-	transport, err := client.Connect("255.255.255.255:1331")
+	transport, err := client.Connect(addr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connect: %v", err))
 		return
@@ -73,7 +74,7 @@ func main() {
 	case serverCmd.FullCommand():
 		server("")
 	case clientCmd.FullCommand():
-		client("")
+		client(*clientAddr)
 	}
 
 }

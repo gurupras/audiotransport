@@ -116,11 +116,11 @@ func (transport *UDPTransport) WriteBytes(data []byte) (n int, err error) {
 	// The protocol is to first write the length and then the bytes itself
 	lengthBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lengthBytes, uint32(len(data)))
-	if n, err = transport.WriteToUDP(lengthBytes, transport.RemoteUDPAddr); err != nil {
+	if n, err = transport.Write(lengthBytes); err != nil {
 		err = errors.New(fmt.Sprintf("Failed to write length on transport: %v", err))
 		return
 	}
-	if n, err = transport.WriteToUDP(data, transport.RemoteUDPAddr); err != nil {
+	if n, err = transport.Write(data); err != nil {
 		err = errors.New(fmt.Sprintf("Failed to write length on transport: %v", err))
 		return
 	}
