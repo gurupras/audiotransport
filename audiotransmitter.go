@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gurupras/audiotransport/alsa"
 	"github.com/xtaci/kcp-go"
 )
@@ -52,13 +53,13 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 	for {
 		alsa.Pa_handle_read(at.PulseCaptureIdx, &buf, size)
 		at.Lock()
-		fmt.Printf("Attempting to send %d bytes\n", len(buf))
+		log.Debugf("Attempting to send %d bytes\n", len(buf))
 		if _, err = at.Write(buf); err != nil {
 			err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
 			return
 		}
 		at.Unlock()
-		fmt.Printf("Sent %d bytes\n", len(buf))
+		log.Debugf("Sent %d bytes\n", len(buf))
 	}
 	return
 }

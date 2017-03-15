@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gurupras/audiotransport/alsa"
 	"github.com/xtaci/kcp-go"
 )
@@ -70,7 +71,7 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 	var listener net.Listener
 	var kcpListener *kcp.Listener
 
-	fmt.Println("Listening for a connection...")
+	log.Info("Listening for a connection...")
 	ar.Lock()
 	defer ar.Unlock()
 	switch proto {
@@ -86,6 +87,6 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 			ar.Conn, err = kcpListener.AcceptKCP()
 		}
 	}
-	fmt.Println("Received connection from:", ar.Conn.RemoteAddr())
+	log.Info("Received connection from:", ar.Conn.RemoteAddr())
 	return
 }
