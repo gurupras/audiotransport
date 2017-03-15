@@ -70,6 +70,7 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 	var listener net.Listener
 	var kcpListener *kcp.Listener
 
+	fmt.Println("Listening for a connection...")
 	ar.Lock()
 	defer ar.Unlock()
 	switch proto {
