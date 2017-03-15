@@ -13,7 +13,7 @@ import (
 )
 
 type AudioTransmitter struct {
-	*Transport
+	Transport
 	sync.Mutex
 	Name            string
 	Device          string
@@ -30,7 +30,6 @@ func NewAudioTransmitter(name string, device string, samplerate int32, channels 
 	}
 
 	at := &AudioTransmitter{}
-	at.Transport = &Transport{}
 	at.Name = name
 	at.Device = device
 	at.PulseCaptureIdx = idx
@@ -44,7 +43,7 @@ func (at *AudioTransmitter) initialize(samplerate int32, channels int32) {
 }
 
 func (at *AudioTransmitter) BeginTransmission() (err error) {
-	if at.Conn == nil {
+	if at.Transport == nil {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
@@ -65,13 +64,17 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 }
 
 func (at *AudioTransmitter) Connect(proto string, addr string) (err error) {
+	var conn net.Conn
 	at.Lock()
 	defer at.Unlock()
 	switch proto {
 	case "tcp":
-		at.Conn, err = net.Dial("tcp", addr)
+		conn, err = net.Dial("tcp", addr)
 	case "udp":
-		at.Conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
+		conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
 	}
+	transport := &BaseTransport{}
+	transport.Conn = conn
+	at.Transport = transport
 	return
 }

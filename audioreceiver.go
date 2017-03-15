@@ -13,7 +13,7 @@ import (
 )
 
 type AudioReceiver struct {
-	*Transport
+	Transport
 	sync.Mutex
 	Name             string
 	Device           string
@@ -30,7 +30,6 @@ func NewAudioReceiver(name string, device string, samplerate int32, channels int
 	}
 
 	ar := &AudioReceiver{}
-	ar.Transport = &Transport{}
 	ar.Name = name
 	ar.Device = device
 	ar.PulsePlaybackIdx = idx
@@ -44,7 +43,7 @@ func (ar *AudioReceiver) initialize(samplerate int32, channels int32) {
 }
 
 func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error) {
-	if ar.Conn == nil {
+	if ar.Transport == nil {
 		err = errors.New("Cannot begin reception before connection to transmitter is established")
 		return
 	}
@@ -71,6 +70,7 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 	var listener net.Listener
 	var kcpListener *kcp.Listener
+	var conn net.Conn
 
 	log.Info("Listening for a connection...")
 	ar.Lock()
@@ -80,14 +80,18 @@ func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
 		if listener, err = net.Listen("tcp", addr); err != nil {
 			return
 		}
-		ar.Conn, err = listener.Accept()
+		conn, err = listener.Accept()
+
 	case "udp":
 		if kcpListener, err = kcp.ListenWithOptions(addr, nil, 10, 3); err != nil {
 			return
 		} else {
-			ar.Conn, err = kcpListener.AcceptKCP()
+			conn, err = kcpListener.AcceptKCP()
 		}
 	}
-	log.Info("Received connection from:", ar.Conn.RemoteAddr())
+	transport := &BaseTransport{}
+	transport.Conn = conn
+	ar.Transport = transport
+	log.Info("Received connection from:", conn.RemoteAddr())
 	return
 }

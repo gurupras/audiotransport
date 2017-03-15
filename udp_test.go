@@ -36,17 +36,44 @@ func read(conn net.Conn) (dataBytes []byte, err error) {
 func TestServer(t *testing.T) {
 	assert := assert.New(t)
 
+	syncWg := sync.WaitGroup{}
+	syncWg.Add(1)
+	callback := func(transport Transport) {
+		defer syncWg.Done()
+		dataChan := make(chan []byte)
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			transport.AsyncRead(dataChan)
+			close(dataChan)
+		}()
+
+		data := make([]byte, 0)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for b := range dataChan {
+				data = append(data, b...)
+			}
+		}()
+
+		wg.Wait()
+		assert.Equal(string(data), "MAGIC-CLIENT", "Data does not match")
+
+		err := transport.Close()
+		assert.Nil(err, fmt.Sprintf("Failed to close transport: %v", err))
+	}
+
 	server := NewUDPServer()
-	err := server.Listen("127.0.0.1:6654")
+	err := server.Listen("127.0.0.1:6654", callback)
 	assert.Nil(err, "Failed to start server")
 
 	conn, err := net.Dial("udp", "127.0.0.1:6654")
 	assert.Nil(err, "Failed to connect to server")
 
-	CommonTest(assert, server.Transport, conn)
-}
-
-func CommonTest(assert *assert.Assertions, transport *Transport, conn net.Conn) {
+	syncWg.Add(1)
 	go func() {
 		_, err := write(conn, []byte("MAGIC-CLIENT"))
 		assert.Nil(err, "Failed to write data to transport", err)
@@ -58,31 +85,7 @@ func CommonTest(assert *assert.Assertions, transport *Transport, conn net.Conn) 
 		assert.Nil(err, "Failed to close connection to transport", err)
 	}()
 
-	dataChan := make(chan []byte)
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		transport.AsyncRead(dataChan)
-		close(dataChan)
-	}()
-
-	data := make([]byte, 0)
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for b := range dataChan {
-			data = append(data, b...)
-		}
-	}()
-
-	wg.Wait()
-	assert.Equal(string(data), "MAGIC-CLIENT", "Data does not match")
-
-	err := transport.Close()
-	assert.Nil(err, fmt.Sprintf("Failed to close transport: %v", err))
-
+	syncWg.Wait()
 }
 
 func TransportData(assert *assert.Assertions, data []byte, port int) {
@@ -93,25 +96,32 @@ func TransportData(assert *assert.Assertions, data []byte, port int) {
 
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	go func() {
-		err = client.Connect(addr)
+		transport, err := client.Connect(addr)
 		assert.Nil(err, "Failed to connect to server")
 
-		_, err = client.WriteBytes(data)
+		_, err = transport.WriteBytes(data)
 		assert.Nil(err, "Failed to write bytes to server", err)
 
 		//_, err = client.WriteBytes([]byte(MAGIC))
 		//client.Close()
 	}()
 
-	err = server.Listen(addr)
-	assert.Nil(err, "Failed to listen for connections", err)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	callback := func(transport Transport) {
+		defer wg.Done()
+		rcvData, err := transport.ReadBytes()
+		assert.Nil(err, "Failed to read bytes from client", err)
+		assert.True(reflect.DeepEqual(data, rcvData), "Data does not match")
+	}
 
-	rcvData, err := server.ReadBytes()
-	assert.Nil(err, "Failed to read bytes from client", err)
-	assert.True(reflect.DeepEqual(data, rcvData), "Data does not match")
+	err = server.Listen(addr, callback)
+	assert.Nil(err, "Failed to listen for connections", err)
 
 	//data, err = server.ReadBytes()
 	//assert.Equal(MAGIC, string(data))
+
+	wg.Wait()
 }
 
 func TestTransport(t *testing.T) {

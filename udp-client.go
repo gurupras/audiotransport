@@ -1,22 +1,46 @@
 package audiotransport
 
-import "github.com/xtaci/kcp-go"
+import (
+	"net"
+
+	"github.com/xtaci/kcp-go"
+)
 
 type UdpClient struct {
-	*Transport
 }
 
 func NewUDPClient() *UdpClient {
 	client := &UdpClient{}
-	client.Transport = &Transport{}
 	return client
 }
 
-func (client *UdpClient) Connect(addr string) error {
-	conn, err := kcp.DialWithOptions(addr, nil, 3, 10)
-	if err != nil {
-		return err
+func (client *UdpClient) Connect(addr string) (transport Transport, err error) {
+	var udpAddr *net.UDPAddr
+	var conn *net.UDPConn
+
+	if false {
+		_, err = kcp.DialWithOptions(addr, nil, 3, 10)
+		if err != nil {
+			return
+		}
+		_ = conn
 	}
-	client.Conn = conn
-	return err
+
+	if udpAddr, err = net.ResolveUDPAddr("udp", addr); err != nil {
+		return
+	}
+	if conn, err = net.DialUDP("udp", nil, udpAddr); err != nil {
+		return
+	}
+
+	session := &UDPSession{}
+	session.UDPConn = conn
+	session.RemoteUDPAddr = udpAddr
+
+	udpTransport := &UDPTransport{}
+	udpTransport.UDPSession = session
+
+	transport = udpTransport
+
+	return
 }
