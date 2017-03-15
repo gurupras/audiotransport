@@ -52,7 +52,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 		alsa.Pa_handle_read(at.PulseCaptureIdx, &buf, size)
 		at.Lock()
 		fmt.Printf("Attempting to send %d bytes\n", len(buf))
-		if _, err = at.WriteBytes(buf); err != nil {
+		if _, err = at.Write(buf); err != nil {
 			err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
 			return
 		}
