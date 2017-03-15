@@ -48,7 +48,8 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 		err = errors.New("Cannot begin reception before connection to transmitter is established")
 		return
 	}
-	data := make([]byte, ar.samplerate/2)
+	bufsize := GetBufferSize(ar.samplerate)
+	data := make([]byte, bufsize)
 	for {
 		ar.Lock()
 		if _, err = ar.Read(data); err != nil {
