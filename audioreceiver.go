@@ -3,6 +3,7 @@ package audiotransport
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"sync"
 
@@ -65,10 +66,25 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 	return
 }
 
-func (ar *AudioReceiver) Listen(addr string) (err error) {
-	listener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
+func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
+	var listener net.Listener
+	var kcpListener *kcp.Listener
+
 	ar.Lock()
-	ar.Conn, err = listener.AcceptKCP()
-	ar.Unlock()
+	defer ar.Unlock()
+	switch proto {
+	case "tcp":
+		if listener, err = net.Listen("tcp", addr); err != nil {
+			return
+		}
+		ar.Conn, err = listener.Accept()
+	case "udp":
+		if kcpListener, err = kcp.ListenWithOptions(addr, nil, 10, 3); err != nil {
+			return
+		} else {
+			ar.Conn, err = kcpListener.AcceptKCP()
+		}
+	}
+	fmt.Println("Received connection from:", ar.Conn.RemoteAddr())
 	return
 }

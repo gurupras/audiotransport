@@ -14,11 +14,13 @@ import (
 )
 
 var (
-	addr *string
+	addr  *string
+	proto *string
 )
 
 func setupParser() {
 	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
+	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 }
 func main() {
 	setupParser()
@@ -26,7 +28,7 @@ func main() {
 	var err error
 
 	audioTransmitter := audiotransport.NewAudioTransmitter("transmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2)
-	if err = audioTransmitter.Connect(*addr); err != nil {
+	if err = audioTransmitter.Connect(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}

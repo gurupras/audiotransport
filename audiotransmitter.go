@@ -3,6 +3,7 @@ package audiotransport
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"sync"
 
@@ -62,9 +63,14 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 	return
 }
 
-func (at *AudioTransmitter) Connect(addr string) (err error) {
+func (at *AudioTransmitter) Connect(proto string, addr string) (err error) {
 	at.Lock()
-	at.Conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
-	at.Unlock()
+	defer at.Unlock()
+	switch proto {
+	case "tcp":
+		at.Conn, err = net.Dial("tcp", addr)
+	case "udp":
+		at.Conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
+	}
 	return
 }
