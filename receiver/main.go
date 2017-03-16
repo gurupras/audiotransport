@@ -8,20 +8,23 @@ import "C"
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
 )
 
 var (
-	addr  *string
-	proto *string
-	api   *string
+	addr   *string
+	proto  *string
+	device *string
+	api    *string
 )
 
 func setupParser() {
 	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
 	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
+	device = kingpin.Flag("device", "Device to use for playback").Short('d').String()
 	api = kingpin.Flag("method", "Which mechanism to use.. ALSA/PULSE").Short('m').Default("PULSE").String()
 }
 func main() {
@@ -40,7 +43,20 @@ func main() {
 		return
 	}
 
-	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", "NULL", 48000, 2)
+	var dev string
+	if device == nil || strings.Compare(*device, "") == 0 {
+		switch apiType {
+		case audiotransport.ALSA_API:
+			dev = "default"
+		case audiotransport.PULSE_API:
+			dev = "NULL"
+		}
+	} else {
+		dev = *device
+	}
+	fmt.Printf("Device=%s\n", dev)
+
+	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", dev, 48000, 2)
 	if err = audioReceiver.Listen(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
