@@ -20,8 +20,10 @@ struct format_header {
 	unsigned short	bits_per_sample;
 };
 
-int init_playback(const char *device, int samplerate, int channels);
-int alsa_writei(const void *bytes, int len);
-int play_bytes(int handle_idx, const void *bytes, int len);
-int close_playback(int handle_idx);
+int alsa_init(const char *device, int samplerate, int channels, int is_playback);
+int alsa_prepare(int idx);
+int alsa_close(int handle_idx);
+int alsa_readi(int idx, void *bytes, int len);
+int alsa_writei(int idx, const void *bytes, int len);
+int alsa_play_bytes(int handle_idx, const void *bytes, int len);
 #endif

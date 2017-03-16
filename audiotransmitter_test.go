@@ -12,7 +12,7 @@ func TestTransmitter(t *testing.T) {
 	assert := assert.New(t)
 
 	go func() {
-		at := NewAudioTransmitter("TestTransmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2)
+		at := NewAudioTransmitter(PULSE_API, "TestTransmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2)
 		assert.NotNil(at, "Failed to initialize audio transmitter")
 		err := at.Connect("udp", "127.0.0.1:6556")
 		assert.Nil(err, "Failed to connect to server", err)
@@ -65,7 +65,7 @@ func TestReceiver(t *testing.T) {
 	}
 
 	go func() {
-		ar := NewAudioReceiver("TestReceiver", "alsa_output.pci-0000_00_05.0.analog-stereo", 48000, 2)
+		ar := NewAudioReceiver(PULSE_API, "TestReceiver", "alsa_output.pci-0000_00_05.0.analog-stereo", 48000, 2)
 		assert.NotNil(ar, "Failed to initialize audio receiver")
 		err := ar.Listen("udp", "127.0.0.1:6557")
 		assert.Nil(err, "Failed to listen for connections", err)

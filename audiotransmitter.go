@@ -14,25 +14,34 @@ import (
 
 type AudioTransmitter struct {
 	Transport
+	ApiType
 	sync.Mutex
-	Name            string
-	Device          string
-	PulseCaptureIdx int32
-	samplerate      int32
-	channels        int32
+	Name       string
+	Device     string
+	CaptureIdx int32
+	samplerate int32
+	channels   int32
 }
 
-func NewAudioTransmitter(name string, device string, samplerate int32, channels int32) *AudioTransmitter {
-	idx := alsa.Pa_init(name, device, samplerate, channels, 0)
+func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate int32, channels int32) *AudioTransmitter {
+	var idx int32
+
+	switch apiType {
+	case ALSA_API:
+		idx = alsa.Alsa_init(device, samplerate, channels, 0)
+	case PULSE_API:
+		idx = alsa.Pa_init(name, device, samplerate, channels, 0)
+	}
 	if idx < 0 {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to initialize pulseaudio: %v", idx))
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to initialize %s: %v", apiType.ApiString(), idx))
 		return nil
 	}
 
 	at := &AudioTransmitter{}
+	at.ApiType = apiType
 	at.Name = name
 	at.Device = device
-	at.PulseCaptureIdx = idx
+	at.CaptureIdx = idx
 	at.initialize(samplerate, channels)
 	return at
 }
@@ -47,10 +56,15 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
-	bufsize := GetBufferSize(at.samplerate)
+	bufsize := at.GetBufferSize(at.samplerate, at.channels)
 	buf := make([]byte, bufsize)
 	for {
-		alsa.Pa_handle_read(at.PulseCaptureIdx, &buf, bufsize)
+		switch at.ApiType {
+		case ALSA_API:
+			alsa.Alsa_readi(at.CaptureIdx, &buf, bufsize)
+		case PULSE_API:
+			alsa.Pa_handle_read(at.CaptureIdx, &buf, bufsize)
+		}
 		at.Lock()
 		log.Debugf("Attempting to send %d bytes\n", len(buf))
 		if _, err = at.Write(buf); err != nil {

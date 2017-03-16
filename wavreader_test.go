@@ -65,15 +65,15 @@ func TestPlayback(t *testing.T) {
 	assert.Nil(err, "Failed to read data from WAV file", err)
 	assert.Equal(dataChunkHeader.Length, n)
 
-	idx := alsa.Init_playback("default", int32(wh.SampleRate), int32(wh.NumChannels))
-	alsa.Play_bytes(idx, &data, int32(len(data)))
+	idx := alsa.Alsa_init("default", int32(wh.SampleRate), int32(wh.NumChannels), 1)
+	alsa.Alsa_play_bytes(idx, &data, int32(len(data)))
 }
 
 func RandomBytes(b []byte, len int) {
 	_, _ = rand.Read(b)
 }
 func TestRandomPlayback(t *testing.T) {
-	idx := alsa.Init_playback("default", 44100, 2)
+	idx := alsa.Alsa_init("default", 44100, 2, 1)
 	// One thread to generate and one thread to play
 	bufsize := 512 * 1024
 	var buf *[]byte
@@ -86,7 +86,7 @@ func TestRandomPlayback(t *testing.T) {
 
 	go func() {
 		for {
-			alsa.Play_bytes(idx, buf, int32(bufsize))
+			alsa.Alsa_play_bytes(idx, buf, int32(bufsize))
 		}
 	}()
 	wg.Wait()

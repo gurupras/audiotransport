@@ -17,40 +17,53 @@ import "C"
 import "unsafe"
 
 // Init_playback function as declared in alsa-bindings/alsa.h:1
-func Init_playback(Device string, Samplerate int32, Channels int32) int32 {
+func Alsa_init(Device string, Samplerate int32, Channels int32, IsPlayback int32) int32 {
 	cDevice, _ := unpackPCharString(Device)
 	cSamplerate, _ := (C.int)(Samplerate), cgoAllocsUnknown
 	cChannels, _ := (C.int)(Channels), cgoAllocsUnknown
-	__ret := C.init_playback(cDevice, cSamplerate, cChannels)
+	cIsPlayback, _ := (C.int)(IsPlayback), cgoAllocsUnknown
+	__ret := C.alsa_init(cDevice, cSamplerate, cChannels, cIsPlayback)
+	__v := (int32)(__ret)
+	return __v
+}
+
+// Alsa_readi function as declared in alsa-bindings/alsa.h:2
+func Alsa_readi(HandleIdx int32, b *[]byte, Len int32) int32 {
+	cHandleIdx, _ := (C.int)(HandleIdx), cgoAllocsUnknown
+	addr := &((*b)[0])
+	cBytes := unsafe.Pointer(addr)
+	cLen, _ := (C.int)(Len), cgoAllocsUnknown
+	__ret := C.alsa_readi(cHandleIdx, cBytes, cLen)
 	__v := (int32)(__ret)
 	return __v
 }
 
 // Alsa_writei function as declared in alsa-bindings/alsa.h:2
-func Alsa_writei(b *[]byte, Len int32) int32 {
+func Alsa_writei(HandleIdx int32, b *[]byte, Len int32) int32 {
+	cHandleIdx, _ := (C.int)(HandleIdx), cgoAllocsUnknown
 	addr := &((*b)[0])
 	cBytes := unsafe.Pointer(addr)
 	cLen, _ := (C.int)(Len), cgoAllocsUnknown
-	__ret := C.alsa_writei(cBytes, cLen)
+	__ret := C.alsa_writei(cHandleIdx, cBytes, cLen)
 	__v := (int32)(__ret)
 	return __v
 }
 
 // Play_bytes function as declared in alsa-bindings/alsa.h:3
-func Play_bytes(HandleIdx int32, b *[]byte, Len int32) int32 {
+func Alsa_play_bytes(HandleIdx int32, b *[]byte, Len int32) int32 {
 	cHandleIdx, _ := (C.int)(HandleIdx), cgoAllocsUnknown
 	addr := &((*b)[0])
 	cBytes := unsafe.Pointer(addr)
 	cLen, _ := (C.int)(Len), cgoAllocsUnknown
-	__ret := C.play_bytes(cHandleIdx, cBytes, cLen)
+	__ret := C.alsa_play_bytes(cHandleIdx, cBytes, cLen)
 	__v := (int32)(__ret)
 	return __v
 }
 
 // Close_playback function as declared in alsa-bindings/alsa.h:4
-func Close_playback(HandleIdx int32) int32 {
+func Alsa_close(HandleIdx int32) int32 {
 	cHandleIdx, _ := (C.int)(HandleIdx), cgoAllocsUnknown
-	__ret := C.close_playback(cHandleIdx)
+	__ret := C.alsa_close(cHandleIdx)
 	__v := (int32)(__ret)
 	return __v
 }
