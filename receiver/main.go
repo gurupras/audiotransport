@@ -10,8 +10,10 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
+	"github.com/gurupras/audiotransport/alsa"
 )
 
 var (
@@ -54,9 +56,11 @@ func main() {
 	} else {
 		dev = *device
 	}
-	fmt.Printf("Device=%s\n", dev)
+	log.Debugf("Device=%s\n", dev)
 
 	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", dev, 48000, 2)
+	log.Infof("Receiver latency=%0.0f\n", float32(alsa.Pa_get_latency(audioReceiver.PlaybackIdx)))
+
 	if err = audioReceiver.Listen(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return

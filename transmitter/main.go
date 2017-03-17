@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
+	"github.com/gurupras/audiotransport/alsa"
 )
 
 var (
@@ -54,13 +57,21 @@ func main() {
 	} else {
 		dev = *device
 	}
+	log.Debugf("Device=%s\n", dev)
 
 	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 48000, 2)
+	go func() {
+		for {
+			log.Infof("Transmitter latency=%0.0f\n", float32(alsa.Pa_get_latency(audioTransmitter.CaptureIdx)))
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+
 	if err = audioTransmitter.Connect(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}
-	fmt.Println("Connected to remote receiver:", audioTransmitter.RemoteAddr())
+	log.Infoln("Connected to remote receiver:", audioTransmitter.RemoteAddr())
 
 	audioTransmitter.BeginTransmission()
 }
