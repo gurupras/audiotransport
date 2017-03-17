@@ -25,6 +25,16 @@ int pa_init(char *name, char *device, int samplerate, int channels, int is_playb
 	ss.channels = channels;
 	ss.rate = samplerate;
 
+	pa_buffer_attr buffer_attrs = {128, 512, -1, -1};
+	pa_buffer_attr *buf_attr_ptr = NULL;
+	/*
+	buffer_attrs.maxlength = -1;
+	buffer_attrs.tlength = -1;
+	buffer_attrs.prebuf = -1;
+	buffer_attrs.minreq = -1;
+	buffer_attrs.fragsize = -1;
+	*/
+
 	int idx = 0;
 	for(idx = 0; idx < 32; idx++) {
 		if(configs[idx] == NULL) {
@@ -43,14 +53,14 @@ int pa_init(char *name, char *device, int samplerate, int channels, int is_playb
 
 	s = pa_simple_new(
 			NULL,               // Use the default server.
-			name,           // Our application's name.
+			name,               // Our application's name.
 			is_playback == 0 ? PA_STREAM_RECORD : PA_STREAM_PLAYBACK,
 			device,
 			//"<alsa_output.pci-0000_00_05.0.analog-stereo.monitor>",               // Use the default device.
 			"libalsa pulse stream capture",            // Description of our stream.
 			&ss,                // Our sample format.
 			NULL,               // Use default channel map
-			NULL,               // Use default buffering attributes.
+			buf_attr_ptr,      // Use default buffering attributes.
 			NULL                // Ignore error code.
 			);
 	if(s == NULL) {
@@ -92,6 +102,17 @@ int pa_handle_write(int idx, char *buf, int len) {
 		return error;
 	}
 	return 0;
+}
+
+int pa_get_latency(int idx) {
+	struct config *config = configs[idx];
+	int error;
+	int latency;
+	if((latency = pa_simple_get_latency(config->pa_simple, &error)) == -1) {
+		printf("pa_simple_get_latency() failed: %s\n", pa_strerror(error));
+		return -1;
+	}
+	return latency;
 }
 
 int pa_release(int idx) {

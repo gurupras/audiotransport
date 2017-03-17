@@ -109,3 +109,11 @@ func Pa_release(Idx int32) int32 {
 	__v := (int32)(__ret)
 	return __v
 }
+
+// Pa_get_latency function as declared in alsa-bindings/pulse.h:5
+func Pa_get_latency(Idx int32) int32 {
+	cIdx, _ := (C.int)(Idx), cgoAllocsUnknown
+	__ret := C.pa_get_latency(cIdx)
+	__v := (int32)(__ret)
+	return __v
+}

@@ -4,4 +4,5 @@ int pa_init(const char *name, const char *device, int samplerate, int channels, 
 int pa_handle_read(int idx, const void *buf, int len);
 int pa_handle_write(int idx, const void *buf, int len);
 int pa_release(int idx);
+int pa_get_latency(int idx);
 #endif
