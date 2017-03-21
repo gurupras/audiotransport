@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	name          *string
 	addr          *string
 	proto         *string
 	device        *string
@@ -25,6 +26,7 @@ var (
 )
 
 func setupParser() {
+	name = kingpin.Flag("name", "program name. This is used as filename in FILE method").Short('n').Default("transmitter").String()
 	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
 	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 	device = kingpin.Flag("device", "Device from which to capture and transmit").Short('d').String()
@@ -43,6 +45,8 @@ func main() {
 		apiType = audiotransport.PULSE_API
 	case "ALSA":
 		apiType = audiotransport.ALSA_API
+	case "FILE":
+		apiType = audiotransport.FILE_API
 	default:
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Invalid API: %v", *api))
 		return
@@ -61,7 +65,7 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 96000, 2, true)
+	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 96000, 2, true)
 	go func() {
 		for {
 			log.Infof("Transmitter latency=%0.0f", float32(audioTransmitter.Backend.GetLatency()))
@@ -87,5 +91,7 @@ func main() {
 			lastTime = now
 		}
 	}
-	audioTransmitter.BeginTransmission()
+	if err = audioTransmitter.BeginTransmission(); err != nil {
+		fmt.Println(err)
+	}
 }

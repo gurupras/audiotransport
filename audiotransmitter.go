@@ -38,6 +38,8 @@ func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate
 		backend = &AlsaBackend{}
 	case PULSE_API:
 		backend = &PulseBackend{}
+	case FILE_API:
+		backend = &FileBackend{}
 	}
 	if err := backend.Init(name, device, samplerate, channels, 0); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to initialize %s: %v", apiType.ApiString(), err))

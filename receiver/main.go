@@ -13,10 +13,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
-	"github.com/gurupras/audiotransport/alsa"
 )
 
 var (
+	name   *string
 	addr   *string
 	proto  *string
 	device *string
@@ -24,6 +24,7 @@ var (
 )
 
 func setupParser() {
+	name = kingpin.Flag("name", "program name. This is used as filename in FILE method").Short('n').Default("receiver").String()
 	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
 	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 	device = kingpin.Flag("device", "Device to use for playback").Short('d').String()
@@ -40,6 +41,8 @@ func main() {
 		apiType = audiotransport.PULSE_API
 	case "ALSA":
 		apiType = audiotransport.ALSA_API
+	case "FILE":
+		apiType = audiotransport.FILE_API
 	default:
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Invalid API: %v", *api))
 		return
@@ -58,13 +61,14 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", dev, 96000, 2)
-	log.Infof("Receiver latency=%0.0f\n", float32(alsa.Pa_get_latency(audioReceiver.PlaybackIdx)))
+	audioReceiver := audiotransport.NewAudioReceiver(apiType, *name, dev, 96000, 2)
 
 	if err = audioReceiver.Listen(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}
 
-	audioReceiver.BeginReception(nil)
+	if err = audioReceiver.BeginReception(nil); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }

@@ -26,6 +26,8 @@ func NewAudioReceiver(apiType ApiType, name string, device string, samplerate in
 		backend = &AlsaBackend{}
 	case PULSE_API:
 		backend = &PulseBackend{}
+	case FILE_API:
+		backend = &FileBackend{}
 	}
 
 	if err := backend.Init(name, device, samplerate, channels, 1); err != nil {
