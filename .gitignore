@@ -11,6 +11,7 @@
 /transmitter/transmitter
 /kcp-client/kcp-client
 /kcp-server/kcp-server
+/frame-checker/frame-checker
 
 *.test
 
