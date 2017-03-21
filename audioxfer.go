@@ -16,13 +16,3 @@ func (apiType ApiType) ApiString() string {
 	}
 	return ""
 }
-
-func (apiType ApiType) GetBufferSize(samplerate int32, channels int32) int32 {
-	switch apiType {
-	case ALSA_API:
-		return 128 * (16 / 8) * 2
-	case PULSE_API:
-		return 512
-	}
-	return -1
-}

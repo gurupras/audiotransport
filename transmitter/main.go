@@ -14,14 +14,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
-	"github.com/gurupras/audiotransport/alsa"
 )
 
 var (
-	addr   *string
-	proto  *string
-	device *string
-	api    *string
+	addr          *string
+	proto         *string
+	device        *string
+	api           *string
+	filterSilence *bool
 )
 
 func setupParser() {
@@ -29,7 +29,9 @@ func setupParser() {
 	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 	device = kingpin.Flag("device", "Device from which to capture and transmit").Short('d').String()
 	api = kingpin.Flag("method", "Which mechanism to use.. ALSA/PULSE").Short('m').Default("PULSE").String()
+	filterSilence = kingpin.Flag("filter-silence", "Filter out empty audio data").Short('f').Default("true").Bool()
 }
+
 func main() {
 	setupParser()
 	kingpin.Parse()
@@ -59,10 +61,10 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 96000, 2)
+	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 96000, 2, true)
 	go func() {
 		for {
-			log.Infof("Transmitter latency=%0.0f", float32(alsa.Pa_get_latency(audioTransmitter.CaptureIdx)))
+			log.Infof("Transmitter latency=%0.0f", float32(audioTransmitter.Backend.GetLatency()))
 			time.Sleep(1000 * time.Millisecond)
 		}
 	}()
