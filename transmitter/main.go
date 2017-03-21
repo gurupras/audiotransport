@@ -59,7 +59,7 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 48000, 2)
+	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, "transmitter", dev, 96000, 2)
 	go func() {
 		for {
 			log.Infof("Transmitter latency=%0.0f\n", float32(alsa.Pa_get_latency(audioTransmitter.CaptureIdx)))

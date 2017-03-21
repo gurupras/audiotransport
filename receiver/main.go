@@ -58,7 +58,7 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", dev, 48000, 2)
+	audioReceiver := audiotransport.NewAudioReceiver(apiType, "transmitter", dev, 96000, 2)
 	log.Infof("Receiver latency=%0.0f\n", float32(alsa.Pa_get_latency(audioReceiver.PlaybackIdx)))
 
 	if err = audioReceiver.Listen(*proto, *addr); err != nil {
