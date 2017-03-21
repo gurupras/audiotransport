@@ -16,11 +16,12 @@ type AudioTransmitter struct {
 	Transport
 	ApiType
 	sync.Mutex
-	Name       string
-	Device     string
-	CaptureIdx int32
-	samplerate int32
-	channels   int32
+	Name                 string
+	Device               string
+	CaptureIdx           int32
+	samplerate           int32
+	channels             int32
+	TransmissionCallback func(b []byte, len int32)
 }
 
 func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate int32, channels int32) *AudioTransmitter {
@@ -70,6 +71,9 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 		if _, err = at.Write(buf); err != nil {
 			err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
 			return
+		}
+		if at.TransmissionCallback != nil {
+			at.TransmissionCallback(buf, bufsize)
 		}
 		at.Unlock()
 		log.Debugf("Sent %d bytes\n", len(buf))
