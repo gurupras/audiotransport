@@ -27,6 +27,7 @@ int pa_init(char *name, char *device, int samplerate, int channels, int is_playb
 
 	pa_buffer_attr buffer_attrs = {128, 512, -1, -1};
 	pa_buffer_attr *buf_attr_ptr = NULL;
+	(void) buffer_attrs;
 	/*
 	buffer_attrs.maxlength = -1;
 	buffer_attrs.tlength = -1;
@@ -113,6 +114,24 @@ int pa_get_latency(int idx) {
 		return -1;
 	}
 	return latency;
+}
+
+int pa_drain(int idx) {
+	struct config *config = configs[idx];
+	int error;
+	if(pa_simple_drain(config->pa_simple, &error) < 0) {
+		fprintf(stderr, __FILE__": pa_simple_drain() failed: %s\n", pa_strerror(error));
+	}
+	return error;
+}
+
+int pa_flush(int idx) {
+	struct config *config = configs[idx];
+	int error;
+	if(pa_simple_flush(config->pa_simple, &error) < 0) {
+		fprintf(stderr, __FILE__": pa_simple_flush() failed: %s\n", pa_strerror(error));
+	}
+	return error;
 }
 
 int pa_release(int idx) {

@@ -110,6 +110,22 @@ func Pa_release(Idx int32) int32 {
 	return __v
 }
 
+// Pa_drain function as declared in alsa-bindings/pulse.h:4
+func Pa_drain(Idx int32) int32 {
+	cIdx, _ := (C.int)(Idx), cgoAllocsUnknown
+	__ret := C.pa_drain(cIdx)
+	__v := (int32)(__ret)
+	return __v
+}
+
+// Pa_flush function as declared in alsa-bindings/pulse.h:4
+func Pa_flush(Idx int32) int32 {
+	cIdx, _ := (C.int)(Idx), cgoAllocsUnknown
+	__ret := C.pa_flush(cIdx)
+	__v := (int32)(__ret)
+	return __v
+}
+
 // Pa_get_latency function as declared in alsa-bindings/pulse.h:5
 func Pa_get_latency(Idx int32) int32 {
 	cIdx, _ := (C.int)(Idx), cgoAllocsUnknown
