@@ -68,7 +68,8 @@ func main() {
 	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 96000, 2, true)
 	go func() {
 		for {
-			log.Infof("Transmitter latency=%0.0f", float32(audioTransmitter.Backend.GetLatency()))
+			lat, _ := audioTransmitter.Backend.GetLatency()
+			log.Infof("Transmitter latency=%0.0f", float64(lat))
 			time.Sleep(1000 * time.Millisecond)
 		}
 	}()
@@ -80,8 +81,8 @@ func main() {
 	log.Infoln("Connected to remote receiver:", audioTransmitter.RemoteAddr())
 
 	var lastTime time.Time = time.Now()
-	var size int32 = 0
-	audioTransmitter.TransmissionCallback = func(b []byte, len int32) {
+	var size uint32 = 0
+	audioTransmitter.TransmissionCallback = func(b []byte, len uint32) {
 		now := time.Now()
 		if now.Sub(lastTime).Seconds() < 1.0 {
 			size += len

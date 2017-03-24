@@ -18,7 +18,7 @@ type AudioReceiver struct {
 	sync.Mutex
 }
 
-func NewAudioReceiver(apiType ApiType, name string, device string, samplerate int32, channels int32) *AudioReceiver {
+func NewAudioReceiver(apiType ApiType, name string, device string, samplerate, channels uint32) *AudioReceiver {
 	var backend BackendInterface
 
 	switch apiType {
@@ -30,7 +30,7 @@ func NewAudioReceiver(apiType ApiType, name string, device string, samplerate in
 		backend = &FileBackend{}
 	}
 
-	if err := backend.Init(name, device, samplerate, channels, 1); err != nil {
+	if err := backend.Init(name, device, samplerate, channels, true); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to initialize %s: %v", apiType.ApiString(), err))
 		return nil
 	}
@@ -59,8 +59,8 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 		if dataCallback != nil {
 			dataCallback(&bufBytes)
 		}
-		var ret int32
-		if ret = ar.Backend.Write(bufBytes, bufsize); ret != 0 {
+		var ret int
+		if ret, err = ar.Backend.Write(bufBytes, bufsize); ret != 0 {
 			err = errors.New(fmt.Sprintf("Failed to write data to %s: %v", ar.ApiType.ApiString(), ret))
 			return
 		}

@@ -1,37 +1,39 @@
 package audiotransport
 
-import (
-	"errors"
-	"fmt"
-
-	"github.com/gurupras/audiotransport/alsa"
-)
+import "github.com/mesilliac/pulse-simple"
 
 type PulseBackend struct {
 	*Backend
+	*pulse.Stream
 }
 
-func (pb *PulseBackend) Init(name, device string, samplerate, channels, isPlayback int32) (err error) {
+func (pb *PulseBackend) Init(name, device string, samplerate, channels uint32, isPlayback bool) (err error) {
 	if pb.Backend == nil {
 		pb.Backend = &Backend{}
 	}
 	pb.Backend.Init(name, device, samplerate, channels)
 
-	idx := alsa.Pa_init(name, device, samplerate, channels, isPlayback)
-	if idx < 0 {
-		err = errors.New(fmt.Sprintf("Failed to initialize PULSE: %v", idx))
+	var dir pulse.StreamDirection
+	if isPlayback {
+		dir = pulse.STREAM_PLAYBACK
+	} else {
+		dir = pulse.STREAM_RECORD
 	}
+
+	spec := &pulse.SampleSpec{pulse.SAMPLE_S16LE, samplerate, uint8(channels)}
+	pb.Stream, err = pulse.NewStream("", name, dir, device, "", spec, nil, nil)
 	return
 }
 
-func (pb *PulseBackend) Read(buf []byte, len int32) int32 {
-	return alsa.Pa_handle_read(pb.HandleIdx, &buf, len)
+func (pb *PulseBackend) Read(buf []byte, len uint32) (int, error) {
+	return pb.Stream.Read(buf)
 }
 
-func (pb *PulseBackend) Write(buf []byte, len int32) int32 {
-	return alsa.Pa_handle_write(pb.HandleIdx, &buf, len)
+func (pb *PulseBackend) Write(buf []byte, len uint32) (int, error) {
+	return pb.Stream.Write(buf)
 }
 
-func (pb *PulseBackend) GetLatency() int32 {
-	return alsa.Pa_get_latency(pb.HandleIdx)
+func (pb *PulseBackend) GetLatency() (int64, error) {
+	lat, err := pb.Stream.Latency()
+	return int64(lat), err
 }

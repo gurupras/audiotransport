@@ -16,7 +16,7 @@ type AudioTransmitter struct {
 	ApiType
 	Backend BackendInterface
 	sync.Mutex
-	TransmissionCallback func(b []byte, len int32)
+	TransmissionCallback func(b []byte, len uint32)
 	FilterSilence        bool
 }
 
@@ -30,7 +30,7 @@ func (sb SoundBytes) HasData() bool {
 	return sum > 0
 }
 
-func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate int32, channels int32, filterSilence bool) *AudioTransmitter {
+func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate, channels uint32, filterSilence bool) *AudioTransmitter {
 	var backend BackendInterface
 
 	switch apiType {
@@ -41,7 +41,7 @@ func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate
 	case FILE_API:
 		backend = &FileBackend{}
 	}
-	if err := backend.Init(name, device, samplerate, channels, 0); err != nil {
+	if err := backend.Init(name, device, samplerate, channels, false); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to initialize %s: %v", apiType.ApiString(), err))
 		return nil
 	}

@@ -1,32 +1,34 @@
 package audiotransport
 
+import "errors"
+
 type BackendInterface interface {
-	Init(name, device string, samplerate, channels, isPlayback int32) error
-	Read(b []byte, len int32) int32
-	Write(b []byte, len int32) int32
-	GetBufferSize() int32
-	GetLatency() int32
+	Init(name, device string, samplerate, channels uint32, isPlayback bool) error
+	Read(b []byte, len uint32) (int, error)
+	Write(b []byte, len uint32) (int, error)
+	GetBufferSize() uint32
+	GetLatency() (int64, error)
 }
 
 type Backend struct {
 	Name       string
 	Device     string
 	HandleIdx  int32
-	SampleRate int32
-	Channels   int32
+	SampleRate uint32
+	Channels   uint32
 }
 
-func (b *Backend) Init(name, device string, samplerate, channels int32) {
+func (b *Backend) Init(name, device string, samplerate, channels uint32) {
 	b.Name = name
 	b.Device = device
 	b.SampleRate = samplerate
 	b.Channels = channels
 }
 
-func (b *Backend) GetBufferSize() int32 {
+func (b *Backend) GetBufferSize() uint32 {
 	return 512
 }
 
-func (b *Backend) GetLatency() int32 {
-	return -1
+func (b *Backend) GetLatency() (int64, error) {
+	return -1, errors.New("Unimplemented")
 }

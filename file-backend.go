@@ -10,14 +10,14 @@ type FileBackend struct {
 	*os.File
 }
 
-func (fb *FileBackend) Init(name, device string, samplerate, channels, isPlayback int32) (err error) {
+func (fb *FileBackend) Init(name, device string, samplerate, channels uint32, isPlayback bool) (err error) {
 	if fb.Backend == nil {
 		fb.Backend = &Backend{}
 	}
 	fb.Backend.Init(name, device, samplerate, channels)
 
 	var flags int
-	if isPlayback == 1 {
+	if isPlayback {
 		flags = os.O_CREATE | os.O_TRUNC | os.O_WRONLY
 	} else {
 		flags = os.O_RDONLY
@@ -27,19 +27,21 @@ func (fb *FileBackend) Init(name, device string, samplerate, channels, isPlaybac
 	return
 }
 
-func (fb *FileBackend) Read(buf []byte, len int32) int32 {
-	_, err := fb.File.Read(buf)
+func (fb *FileBackend) Read(buf []byte, len uint32) (int, error) {
+	n, err := fb.File.Read(buf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(-1)
 	}
-	return 0
+	_ = n
+	return 0, err
 }
 
-func (fb *FileBackend) Write(buf []byte, len int32) int32 {
-	_, err := fb.File.Write(buf)
+func (fb *FileBackend) Write(buf []byte, len uint32) (int, error) {
+	n, err := fb.File.Write(buf)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	return 0
+	_ = n
+	return 0, err
 }
