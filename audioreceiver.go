@@ -60,7 +60,7 @@ func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error
 			dataCallback(&bufBytes)
 		}
 		var ret int
-		if ret, err = ar.Backend.Write(bufBytes, bufsize); ret != 0 {
+		if ret, err = ar.Backend.Write(bufBytes); ret != 0 {
 			err = errors.New(fmt.Sprintf("Failed to write data to %s: %v", ar.ApiType.ApiString(), ret))
 			return
 		}

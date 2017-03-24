@@ -27,21 +27,18 @@ func (fb *FileBackend) Init(name, device string, samplerate, channels uint32, is
 	return
 }
 
-func (fb *FileBackend) Read(buf []byte, len uint32) (int, error) {
-	n, err := fb.File.Read(buf)
-	if err != nil {
+func (fb *FileBackend) Read(buf []byte) (n int, err error) {
+	if n, err = fb.File.Read(buf); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(-1)
 	}
-	_ = n
-	return 0, err
+	return
 }
 
-func (fb *FileBackend) Write(buf []byte, len uint32) (int, error) {
-	n, err := fb.File.Write(buf)
-	if err != nil {
+func (fb *FileBackend) Write(buf []byte) (n int, err error) {
+	if n, err = fb.File.Write(buf); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		os.Exit(-1)
 	}
-	_ = n
-	return 0, err
+	return
 }

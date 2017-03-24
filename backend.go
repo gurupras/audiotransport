@@ -1,11 +1,14 @@
 package audiotransport
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
 type BackendInterface interface {
 	Init(name, device string, samplerate, channels uint32, isPlayback bool) error
-	Read(b []byte, len uint32) (int, error)
-	Write(b []byte, len uint32) (int, error)
+	io.Reader
+	io.Writer
 	GetBufferSize() uint32
 	GetLatency() (int64, error)
 }

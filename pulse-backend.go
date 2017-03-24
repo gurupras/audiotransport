@@ -25,11 +25,11 @@ func (pb *PulseBackend) Init(name, device string, samplerate, channels uint32, i
 	return
 }
 
-func (pb *PulseBackend) Read(buf []byte, len uint32) (int, error) {
+func (pb *PulseBackend) Read(buf []byte) (int, error) {
 	return pb.Stream.Read(buf)
 }
 
-func (pb *PulseBackend) Write(buf []byte, len uint32) (int, error) {
+func (pb *PulseBackend) Write(buf []byte) (int, error) {
 	return pb.Stream.Write(buf)
 }
 

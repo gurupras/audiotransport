@@ -61,7 +61,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 	buf := make(SoundBytes, bufsize)
 	bufBytes := []byte(buf)
 	for {
-		at.Backend.Read(bufBytes, bufsize)
+		at.Backend.Read(bufBytes)
 		if at.FilterSilence && !buf.HasData() {
 			// Nothing to do
 			continue
