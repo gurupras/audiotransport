@@ -61,7 +61,7 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioReceiver := audiotransport.NewAudioReceiver(apiType, *name, dev, 96000, 2)
+	audioReceiver := audiotransport.NewAudioReceiver(apiType, *name, dev, 48000, 2)
 
 	if err = audioReceiver.Listen(*proto, *addr); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))

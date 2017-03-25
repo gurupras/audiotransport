@@ -65,7 +65,7 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 96000, 2, true)
+	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 48000, 2, true)
 	go func() {
 		for {
 			lat, _ := audioTransmitter.Backend.GetLatency()
