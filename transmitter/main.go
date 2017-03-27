@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -65,34 +66,46 @@ func main() {
 	}
 	log.Debugf("Device=%s\n", dev)
 
-	audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 48000, 2, true)
-	go func() {
+	addrs := strings.Split(*addr, ",")
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(addrs))
+
+	latencyGoroutine := func(addr string, audioTransmitter *audiotransport.AudioTransmitter) {
 		for {
 			lat, _ := audioTransmitter.Backend.GetLatency()
-			log.Infof("Transmitter latency=%0.0f", float64(lat))
+			log.Infof("%v: Transmitter latency=%0.0f", addr, float64(lat))
 			time.Sleep(1000 * time.Millisecond)
 		}
-	}()
-
-	if err = audioTransmitter.Connect(*proto, *addr); err != nil {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
-		return
 	}
-	log.Infoln("Connected to remote receiver:", audioTransmitter.RemoteAddr())
 
-	var lastTime time.Time = time.Now()
-	var size uint32 = 0
-	audioTransmitter.TransmissionCallback = func(b []byte, len uint32) {
-		now := time.Now()
-		if now.Sub(lastTime).Seconds() < 1.0 {
-			size += len
-		} else {
-			log.Infof("Bandwidth: %0.2fKBps\n", float32(size)/1024.0)
-			size = 0
-			lastTime = now
+	for _, addr := range addrs {
+		audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 48000, 2, true)
+		if err = audioTransmitter.Connect(*proto, addr); err != nil {
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
+			return
 		}
+		go latencyGoroutine(addr, audioTransmitter)
+		log.Infoln("Connected to remote receiver:", addr)
+
+		var lastTime time.Time = time.Now()
+		var size uint32 = 0
+		audioTransmitter.TransmissionCallback = func(transport audiotransport.Transport, b []byte, len uint32) {
+			now := time.Now()
+			if now.Sub(lastTime).Seconds() < 1.0 {
+				size += len
+			} else {
+				log.Infof("%v: Bandwidth: %0.2fKBps\n", transport, float32(size)/1024.0)
+				size = 0
+				lastTime = now
+			}
+		}
+		go func() {
+			defer wg.Done()
+			if err = audioTransmitter.BeginTransmission(); err != nil {
+				fmt.Fprintln(os.Stderr, fmt.Sprintf("Transmission failed with error: %v", err))
+			}
+		}()
 	}
-	if err = audioTransmitter.BeginTransmission(); err != nil {
-		fmt.Println(err)
-	}
+	wg.Wait()
 }

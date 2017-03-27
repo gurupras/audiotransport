@@ -8,15 +8,14 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/xtaci/kcp-go"
 )
 
 type AudioTransmitter struct {
-	Transport
+	Transports []Transport
 	ApiType
 	Backend BackendInterface
 	sync.Mutex
-	TransmissionCallback func(b []byte, len uint32)
+	TransmissionCallback func(transport Transport, b []byte, len uint32)
 	FilterSilence        bool
 }
 
@@ -53,7 +52,7 @@ func NewAudioTransmitter(apiType ApiType, name string, device string, samplerate
 }
 
 func (at *AudioTransmitter) BeginTransmission() (err error) {
-	if at.Transport == nil {
+	if len(at.Transports) == 0 {
 		err = errors.New("Cannot begin transmission before connection to receiver is established")
 		return
 	}
@@ -68,16 +67,19 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 		}
 
 		at.Lock()
-		log.Debugf("Attempting to send %d bytes\n", len(buf))
-		if _, err = at.Write(buf); err != nil {
-			err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
-			return
-		}
-		if at.TransmissionCallback != nil {
-			at.TransmissionCallback(buf, bufsize)
+		for _, transport := range at.Transports {
+			log.Debugf("%v: Attempting to send %d bytes\n", transport, len(buf))
+			if _, err = transport.Write(buf); err != nil {
+				err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
+				at.Unlock()
+				return
+			}
+			if at.TransmissionCallback != nil {
+				at.TransmissionCallback(transport, buf, bufsize)
+			}
+			log.Debugf("Sent %d bytes\n", len(buf))
 		}
 		at.Unlock()
-		log.Debugf("Sent %d bytes\n", len(buf))
 	}
 	return
 }
@@ -92,19 +94,15 @@ func (at *AudioTransmitter) Connect(proto string, addr string) (err error) {
 		conn, err = net.Dial("tcp", addr)
 		transport := &BaseTransport{}
 		transport.Conn = conn
-		at.Transport = transport
+		at.Transports = append(at.Transports, transport)
 	case "kcp":
-		conn, err = kcp.DialWithOptions(addr, nil, 10, 3)
-		transport := &BaseTransport{}
-		transport.Conn = conn
-		at.Transport = transport
 	case "udp":
 		var transport Transport
 		client := NewUDPClient()
 		if transport, err = client.Connect(addr); err != nil {
 			return
 		}
-		at.Transport = transport
+		at.Transports = append(at.Transports, transport)
 	}
 	return
 }

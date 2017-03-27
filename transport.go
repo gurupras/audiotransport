@@ -14,6 +14,7 @@ type Transport interface {
 	ReadBytes() ([]byte, error)
 	AsyncRead(chan []byte)
 	WriteBytes([]byte) (int, error)
+	String() string
 }
 
 type BaseTransport struct {
@@ -71,6 +72,10 @@ func (transport *BaseTransport) WriteBytes(data []byte) (n int, err error) {
 	return
 }
 
+func (transport *BaseTransport) String() string {
+	return fmt.Sprintf("%v", transport.RemoteAddr())
+}
+
 func (transport *UDPTransport) ReadBytes() (data []byte, err error) {
 	var n int
 	var remoteAddr *net.UDPAddr
@@ -126,4 +131,8 @@ func (transport *UDPTransport) WriteBytes(data []byte) (n int, err error) {
 	}
 	fmt.Printf("Wrote %d bytes\n", n)
 	return
+}
+
+func (transport *UDPTransport) String() string {
+	return fmt.Sprintf("%v", transport.UDPSession.UDPConn.RemoteAddr())
 }
