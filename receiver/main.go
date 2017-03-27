@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	name   *string
-	addr   *string
-	proto  *string
-	device *string
-	api    *string
+	name    *string
+	addr    *string
+	proto   *string
+	device  *string
+	api     *string
+	verbose *bool
 )
 
 func setupParser() {
@@ -24,11 +25,17 @@ func setupParser() {
 	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 	device = kingpin.Flag("device", "Device to use for playback").Short('d').String()
 	api = kingpin.Flag("method", "Which mechanism to use.. ALSA/PULSE").Short('m').Default("PULSE").String()
+	verbose = kingpin.Flag("verbose", "Enable verbose logging").Short('v').Default("false").Bool()
 }
 func main() {
 	setupParser()
 	kingpin.Parse()
 	var err error
+
+	if *verbose {
+		log.SetLevel(log.DebugLevel)
+		log.Debugln("Enabling verbose logging")
+	}
 
 	var apiType audiotransport.ApiType
 	switch *api {
@@ -58,12 +65,21 @@ func main() {
 
 	audioReceiver := audiotransport.NewAudioReceiver(apiType, *name, dev, 48000, 2)
 
-	if err = audioReceiver.Listen(*proto, *addr); err != nil {
+	audioReceiver.ReceptionCallback = func(data *[]byte) (err error) {
+		log.Debugf("Wrote %d bytes", len(*data))
+		return
+	}
+
+	callback := func(transport audiotransport.Transport) {
+		if err = audioReceiver.BeginReception(); err != nil {
+			log.Fatalln(err)
+			os.Exit(-1)
+		}
+	}
+
+	if err = audioReceiver.Listen(*proto, *addr, callback); err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}
 
-	if err = audioReceiver.BeginReception(nil); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
 }

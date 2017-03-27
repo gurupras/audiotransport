@@ -24,6 +24,7 @@ var (
 	device        *string
 	api           *string
 	filterSilence *bool
+	verbose       *bool
 )
 
 func setupParser() {
@@ -33,12 +34,18 @@ func setupParser() {
 	device = kingpin.Flag("device", "Device from which to capture and transmit").Short('d').String()
 	api = kingpin.Flag("method", "Which mechanism to use.. ALSA/PULSE").Short('m').Default("PULSE").String()
 	filterSilence = kingpin.Flag("filter-silence", "Filter out empty audio data").Short('f').Default("true").Bool()
+	verbose = kingpin.Flag("verbose", "Enable verbose logging").Short('v').Default("false").Bool()
 }
 
 func main() {
 	setupParser()
 	kingpin.Parse()
 	var err error
+
+	if *verbose {
+		log.SetLevel(log.DebugLevel)
+		log.Debugln("Enabling verbose logging")
+	}
 
 	var apiType audiotransport.ApiType
 	switch *api {

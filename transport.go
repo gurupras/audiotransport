@@ -76,6 +76,11 @@ func (transport *BaseTransport) String() string {
 	return fmt.Sprintf("%v", transport.RemoteAddr())
 }
 
+func (transport *UDPTransport) Read(data []byte) (n int, err error) {
+	n, _, err = transport.UDPConn.ReadFromUDP(data)
+	return
+}
+
 func (transport *UDPTransport) ReadBytes() (data []byte, err error) {
 	var n int
 	var remoteAddr *net.UDPAddr

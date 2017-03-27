@@ -3,7 +3,6 @@ package audiotransport
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 
@@ -68,7 +67,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 
 		at.Lock()
 		for _, transport := range at.Transports {
-			log.Debugf("%v: Attempting to send %d bytes\n", transport, len(buf))
+			log.Debugf("%v: Attempting to send %d bytes", transport, len(buf))
 			if _, err = transport.Write(buf); err != nil {
 				err = errors.New(fmt.Sprintf("Failed to send data over transport: %v", err))
 				at.Unlock()
@@ -77,7 +76,7 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 			if at.TransmissionCallback != nil {
 				at.TransmissionCallback(transport, buf, bufsize)
 			}
-			log.Debugf("Sent %d bytes\n", len(buf))
+			log.Debugf("Sent %d bytes", len(buf))
 		}
 		at.Unlock()
 	}
@@ -85,19 +84,19 @@ func (at *AudioTransmitter) BeginTransmission() (err error) {
 }
 
 func (at *AudioTransmitter) Connect(proto string, addr string) (err error) {
-	var conn net.Conn
+	var transport Transport
 
 	at.Lock()
 	defer at.Unlock()
 	switch proto {
 	case "tcp":
-		conn, err = net.Dial("tcp", addr)
-		transport := &BaseTransport{}
-		transport.Conn = conn
+		client := NewTCPClient()
+		if transport, err = client.Connect(addr); err != nil {
+			return
+		}
 		at.Transports = append(at.Transports, transport)
 	case "kcp":
 	case "udp":
-		var transport Transport
 		client := NewUDPClient()
 		if transport, err = client.Connect(addr); err != nil {
 			return

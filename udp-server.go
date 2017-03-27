@@ -3,11 +3,11 @@ package audiotransport
 import (
 	"fmt"
 	"net"
-
-	"github.com/xtaci/kcp-go"
 )
 
 type UDPServer struct {
+	*Server
+	addr *net.UDPAddr
 }
 
 type UDPSession struct {
@@ -21,29 +21,32 @@ type UDPTransport struct {
 
 func NewUDPServer() *UDPServer {
 	server := UDPServer{}
+	server.Server = &Server{}
 	return &server
 }
 
-func (server *UDPServer) Listen(addr string, callback func(transport Transport)) (err error) {
-	if false {
-		listener, err := kcp.ListenWithOptions(addr, nil, 3, 10)
-		if err != nil {
-			return err
+func (server *UDPServer) Bind(addr string) (err error) {
+	server.addr, err = net.ResolveUDPAddr("udp", addr)
+	return
+}
+
+func (server *UDPServer) Listen(callback func(transport Transport)) (err error) {
+	/*
+		if false {
+			listener, err := kcp.ListenWithOptions(addr, nil, 3, 10)
+			if err != nil {
+				return err
+			}
+			conn, err := listener.AcceptKCP()
+			if err != nil {
+				return err
+			}
+			_ = conn
 		}
-		conn, err := listener.AcceptKCP()
-		if err != nil {
-			return err
-		}
-		_ = conn
-	}
-	var udpAddr *net.UDPAddr
+	*/
 	var conn *net.UDPConn
 
-	if udpAddr, err = net.ResolveUDPAddr("udp", addr); err != nil {
-		return
-	}
-
-	if conn, err = net.ListenUDP("udp", udpAddr); err != nil {
+	if conn, err = net.ListenUDP("udp", server.addr); err != nil {
 		return
 	}
 
@@ -55,5 +58,8 @@ func (server *UDPServer) Listen(addr string, callback func(transport Transport))
 	//}
 	fmt.Printf("Received connection from: %v\n", conn.RemoteAddr())
 	callback(transport)
+
+	// We want listen to be a blocking operation since UDP is connection-less
+	_ = <-server.signalChan
 	return err
 }

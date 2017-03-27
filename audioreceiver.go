@@ -3,18 +3,17 @@ package audiotransport
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/xtaci/kcp-go"
 )
 
 type AudioReceiver struct {
 	Transport
 	ApiType
-	Backend BackendInterface
+	Backend           BackendInterface
+	ReceptionCallback func(data *[]byte) (err error)
 	sync.Mutex
 }
 
@@ -41,73 +40,71 @@ func NewAudioReceiver(apiType ApiType, name string, device string, samplerate, c
 	return ar
 }
 
-func (ar *AudioReceiver) BeginReception(dataCallback func(b *[]byte)) (err error) {
+func (ar *AudioReceiver) BeginReception() (err error) {
 	if ar.Transport == nil {
 		err = errors.New("Cannot begin reception before connection to transmitter is established")
 		return
 	}
+	log.Infoln("Initiating audio reception")
+
 	bufsize := ar.Backend.GetBufferSize()
 	buf := make(SoundBytes, bufsize)
 	bufBytes := []byte(buf)
 	for {
 		ar.Lock()
+		log.Debugf("Attempting to read data of size %d bytes", bufsize)
 		if _, err = ar.Read(bufBytes); err != nil {
 			ar.Unlock()
 			return
 		}
-		ar.Unlock()
-		if dataCallback != nil {
-			dataCallback(&bufBytes)
+		if ar.ReceptionCallback != nil {
+			ar.ReceptionCallback(&bufBytes)
 		}
 		var ret int
-		if ret, err = ar.Backend.Write(bufBytes); ret != 0 {
+		if ret, err = ar.Backend.Write(bufBytes); ret < 0 {
+			ar.Unlock()
 			err = errors.New(fmt.Sprintf("Failed to write data to %s: %v", ar.ApiType.ApiString(), ret))
 			return
 		}
+		ar.Unlock()
 	}
 	return
 }
 
-func (ar *AudioReceiver) Listen(proto string, addr string) (err error) {
-	var listener net.Listener
-	var kcpListener *kcp.Listener
-	var conn net.Conn
-
+func (ar *AudioReceiver) Listen(proto string, addr string, callback func(transport Transport)) (err error) {
 	log.Info("Listening for a connection...")
-	ar.Lock()
-	defer ar.Unlock()
+
+	cb := func(transport Transport) {
+		ar.Transport = transport
+		log.Info("Received connection from:", ar.Transport.RemoteAddr())
+		callback(transport)
+	}
+
 	switch proto {
 	case "tcp":
-		if listener, err = net.Listen("tcp", addr); err != nil {
+		server := NewTCPServer()
+		if err = server.Bind(addr); err != nil {
 			return
 		}
-		conn, err = listener.Accept()
-		transport := &BaseTransport{}
-		transport.Conn = conn
-		ar.Transport = transport
-
+		if err = server.Listen(cb); err != nil {
+			return
+		}
 	case "kcp":
-		if kcpListener, err = kcp.ListenWithOptions(addr, nil, 10, 3); err != nil {
-			return
-		} else {
-			conn, err = kcpListener.AcceptKCP()
-		}
-		transport := &BaseTransport{}
-		transport.Conn = conn
-		ar.Transport = transport
+		/*
+			if kcpListener, err = kcp.ListenWithOptions(addr, nil, 10, 3); err != nil {
+				return
+			} else {
+				conn, err = kcpListener.AcceptKCP()
+			}
+			transport := &BaseTransport{}
+			transport.Conn = conn
+			ar.Transport = transport
+		*/
 	case "udp":
 		server := NewUDPServer()
-		wg := sync.WaitGroup{}
-		wg.Add(1)
-		callback := func(transport Transport) {
-			defer wg.Done()
-			ar.Transport = transport
-		}
-		if err = server.Listen(addr, callback); err != nil {
+		if err = server.Listen(callback); err != nil {
 			return
 		}
-		wg.Wait()
 	}
-	log.Info("Received connection from:", ar.Transport.RemoteAddr())
 	return
 }
