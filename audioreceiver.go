@@ -102,7 +102,7 @@ func (ar *AudioReceiver) Listen(proto string, addr string, callback func(transpo
 		*/
 	case "udp":
 		server := NewUDPServer()
-		if err = server.Listen(callback); err != nil {
+		if err = server.Listen(cb); err != nil {
 			return
 		}
 	}
