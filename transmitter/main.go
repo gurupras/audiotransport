@@ -1,8 +1,5 @@
 package main
 
-/*
-#cgo LDFLAGS: -L.. -lalsa -lasound -lpulse -lpulse-simple
-*/
 import "C"
 
 import (

@@ -24,7 +24,7 @@ func NewAudioReceiver(apiType ApiType, name string, device string, samplerate, c
 	case ALSA_API:
 		backend = &AlsaBackend{}
 	case PULSE_API:
-		backend = &PulseBackend{}
+		backend = &PulseSimpleBackend{}
 	case FILE_API:
 		backend = &FileBackend{}
 	}
