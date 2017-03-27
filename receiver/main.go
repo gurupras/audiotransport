@@ -72,8 +72,7 @@ func main() {
 
 	callback := func(transport audiotransport.Transport) {
 		if err = audioReceiver.BeginReception(); err != nil {
-			log.Fatalln(err)
-			os.Exit(-1)
+			log.Warnln(err)
 		}
 	}
 
@@ -81,5 +80,4 @@ func main() {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
 		return
 	}
-
 }
