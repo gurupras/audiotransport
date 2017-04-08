@@ -10,7 +10,7 @@ import (
 
 func pacmdList(suffix string) ([]string, error) {
 	cmdline := fmt.Sprintf("pacmd list-%v", suffix)
-	cmd := simpleexec.ParseCmd(cmdline).Pipe("grep 'name: '").Pipe(`sed -e 's/^[ \t]\+name: \(.*\)$/\1/g'`)
+	cmd := simpleexec.ParseCmd(cmdline).Pipe("grep 'name: '").Pipe(`sed -e 's/^[ \t]\+name: <\(.*\)>$/\1/g'`)
 	if cmd == nil {
 		return nil, fmt.Errorf("Failed to create pacmd command")
 	}

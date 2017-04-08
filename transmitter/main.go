@@ -1,9 +1,6 @@
 package main
 
-import "C"
-
 import (
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -12,68 +9,30 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/alecthomas/kingpin"
 	"github.com/gurupras/audiotransport"
+	"github.com/gurupras/audiotransport/pacmd"
 )
-
-var (
-	name          *string
-	addr          *string
-	proto         *string
-	device        *string
-	api           *string
-	filterSilence *bool
-	verbose       *bool
-)
-
-func setupParser() {
-	name = kingpin.Flag("name", "program name. This is used as filename in FILE method").Short('n').Default("transmitter").String()
-	addr = kingpin.Arg("receiver-address", "Address of receiver").Required().String()
-	proto = kingpin.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
-	device = kingpin.Flag("device", "Device from which to capture and transmit").Short('d').String()
-	api = kingpin.Flag("method", "Which mechanism to use.. ALSA/PULSE").Short('m').Default("PULSE").String()
-	filterSilence = kingpin.Flag("filter-silence", "Filter out empty audio data").Short('f').Default("true").Bool()
-	verbose = kingpin.Flag("verbose", "Enable verbose logging").Short('v').Default("false").Bool()
-}
 
 func main() {
-	setupParser()
-	kingpin.Parse()
-	var err error
+	app := kingpin.New("transmitter", "Transmit audio")
+	config := audiotransport.ParseArgs(app, os.Args)
 
-	if *verbose {
-		log.SetLevel(log.DebugLevel)
-		log.Debugln("Enabling verbose logging")
-	}
-
-	var apiType audiotransport.ApiType
-	switch *api {
-	case "PULSE":
-		apiType = audiotransport.PULSE_API
-	case "ALSA":
-		apiType = audiotransport.ALSA_API
-	case "FILE":
-		apiType = audiotransport.FILE_API
-	default:
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("Invalid API: %v", *api))
-		return
-	}
-
-	var dev string
-	if device == nil || strings.Compare(*device, "") == 0 {
-		switch apiType {
+	if strings.Compare(config.Device, "") == 0 {
+		log.Infof("No device specified... Using defaults")
+		switch config.Api {
 		case audiotransport.ALSA_API:
-			dev = "hw:1,1"
+			config.Device = "hw:1,1"
 		case audiotransport.PULSE_API:
-			dev = "alsa_output.pci-0000_00_05.0.analog-stereo.monitor"
+			devices, err := pacmd.ListSources()
+			if err != nil {
+				log.Fatalf("Failed to list pacmd sources: %v", err)
+			}
+			config.Device = devices[0]
 		}
-	} else {
-		dev = *device
 	}
-	log.Debugf("Device=%s\n", dev)
-
-	addrs := strings.Split(*addr, ",")
+	log.Infof("Device=%s\n", config.Device)
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(addrs))
+	wg.Add(len(config.Addrs))
 
 	latencyGoroutine := func(addr string, audioTransmitter *audiotransport.AudioTransmitter) {
 		for {
@@ -83,14 +42,13 @@ func main() {
 		}
 	}
 
-	for _, addr := range addrs {
-		audioTransmitter := audiotransport.NewAudioTransmitter(apiType, *name, dev, 48000, 2, true)
-		if err = audioTransmitter.Connect(*proto, addr); err != nil {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("Failed to connet to server: %v", err))
-			return
+	for _, addr := range config.Addrs {
+		audioTransmitter := audiotransport.NewAudioTransmitter(config.Api, config.Name, config.Device, config.Samplerate, config.Channels, true)
+		if err := audioTransmitter.Connect(config.Proto, addr); err != nil {
+			log.Fatalf("Failed to connet to server: %v", err)
 		}
 		go latencyGoroutine(addr, audioTransmitter)
-		log.Infoln("Connected to remote receiver:", addr)
+		log.Infof("Connected to remote receiver: %v", addr)
 
 		var lastTime time.Time = time.Now()
 		var size uint32 = 0
@@ -106,8 +64,8 @@ func main() {
 		}
 		go func() {
 			defer wg.Done()
-			if err = audioTransmitter.BeginTransmission(); err != nil {
-				fmt.Fprintln(os.Stderr, fmt.Sprintf("Transmission failed with error: %v", err))
+			if err := audioTransmitter.BeginTransmission(); err != nil {
+				log.Fatalf("Transmission failed with error: %v", err)
 			}
 		}()
 	}
