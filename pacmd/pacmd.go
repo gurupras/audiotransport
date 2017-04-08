@@ -1,4 +1,4 @@
-package audiotransport
+package pacmd
 
 import (
 	"bytes"
@@ -26,10 +26,10 @@ func pacmdList(suffix string) ([]string, error) {
 	return strings.Split(strings.TrimSpace(result.String()), "\n"), nil
 }
 
-func PulseSources() ([]string, error) {
+func ListSources() ([]string, error) {
 	return pacmdList("sources")
 }
 
-func PulseSinks() ([]string, error) {
+func ListSinks() ([]string, error) {
 	return pacmdList("sinks")
 }

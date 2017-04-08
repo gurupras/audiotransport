@@ -1,4 +1,4 @@
-package audiotransport
+package pacmd
 
 import (
 	"testing"
@@ -6,18 +6,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPulseSources(t *testing.T) {
+func TestListSources(t *testing.T) {
 	require := require.New(t)
 
-	sources, err := PulseSources()
+	sources, err := ListSources()
 	require.Nil(err)
 	require.True(len(sources) > 0)
 }
 
-func TestPulseSinks(t *testing.T) {
+func TestListSinks(t *testing.T) {
 	require := require.New(t)
 
-	sinks, err := PulseSinks()
+	sinks, err := ListSinks()
 	require.Nil(err)
 	require.True(len(sinks) > 0)
 }

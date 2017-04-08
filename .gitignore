@@ -5,6 +5,8 @@
 *.o
 *.a
 
+coverage.out
+
 # Programs
 /alsa-bindings/playback
 /receiver/receiver
