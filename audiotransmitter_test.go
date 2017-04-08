@@ -12,7 +12,7 @@ func TestTransmitter(t *testing.T) {
 	assert := assert.New(t)
 
 	go func() {
-		at := NewAudioTransmitter(PULSE_API, "TestTransmitter", "alsa_output.pci-0000_00_05.0.analog-stereo.monitor", 48000, 2, false)
+		at := NewAudioTransmitter(PULSE_API, "TestTransmitter", "", 48000, 2, false)
 		assert.NotNil(at, "Failed to initialize audio transmitter")
 		err := at.Connect("udp", "127.0.0.1:6556")
 		assert.Nil(err, "Failed to connect to server", err)
@@ -36,7 +36,8 @@ func TestTransmitter(t *testing.T) {
 		}
 	}
 
-	err := server.Listen("127.0.0.1:6556", callback)
+	err := server.Bind("127.0.0.1:6556")
+	server.Listen(callback)
 	assert.Nil(err, "Failed to listen on server", err)
 	wg.Wait()
 }
@@ -60,17 +61,20 @@ func TestReceiver(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	callback := func(b *[]byte) {
+	callback := func(b *[]byte) error {
 		wg.Done()
+		return nil
 	}
 
 	go func() {
 		ar := NewAudioReceiver(PULSE_API, "TestReceiver", "alsa_output.pci-0000_00_05.0.analog-stereo", 48000, 2)
 		assert.NotNil(ar, "Failed to initialize audio receiver")
-		err := ar.Listen("udp", "127.0.0.1:6557")
+		err := ar.Listen("udp", "127.0.0.1:6557", func(transport Transport) {
+			ar.ReceptionCallback = callback
+			err := ar.BeginReception()
+			assert.Nil(err, "Failed to receive data from receiver", err)
+		})
 		assert.Nil(err, "Failed to listen for connections", err)
-		err = ar.BeginReception(callback)
-		assert.Nil(err, "Failed to receive data from receiver", err)
 	}()
 
 	wg.Wait()

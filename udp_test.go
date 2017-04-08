@@ -67,7 +67,9 @@ func TestServer(t *testing.T) {
 	}
 
 	server := NewUDPServer()
-	err := server.Listen("127.0.0.1:6654", callback)
+	err := server.Bind("127.0.0.1:6654")
+	assert.Nil(err)
+	err = server.Listen(callback)
 	assert.Nil(err, "Failed to start server")
 
 	conn, err := net.Dial("udp", "127.0.0.1:6654")
@@ -115,7 +117,9 @@ func TransportData(assert *assert.Assertions, data []byte, port int) {
 		assert.True(reflect.DeepEqual(data, rcvData), "Data does not match")
 	}
 
-	err = server.Listen(addr, callback)
+	err = server.Bind(addr)
+	assert.Nil(err)
+	err = server.Listen(callback)
 	assert.Nil(err, "Failed to listen for connections", err)
 
 	//data, err = server.ReadBytes()
