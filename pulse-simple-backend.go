@@ -21,13 +21,16 @@ func (psb *PulseSimpleBackend) Init(name, device string, samplerate, channels ui
 	}
 
 	bufAttr := pulse.NewBufferAttr()
-	bufAttr.Fragsize = psb.Backend.GetBufferSize()
-	bufAttr.Maxlength = psb.Backend.GetBufferSize() * 4
-	bufAttr.Tlength = bufAttr.Maxlength / 2
-	bufAttr.Minreq = psb.Backend.GetBufferSize() / 4
-	bufAttr.Prebuf = psb.Backend.GetBufferSize()
+	_ = bufAttr
+	/*
+		bufAttr.Fragsize = psb.Backend.GetBufferSize()
+		bufAttr.Maxlength = psb.Backend.GetBufferSize() * 4
+		bufAttr.Tlength = bufAttr.Maxlength / 2
+		bufAttr.Minreq = psb.Backend.GetBufferSize() / 4
+		bufAttr.Prebuf = psb.Backend.GetBufferSize()
+	*/
 	spec := &pulse.SampleSpec{pulse.SAMPLE_S16LE, samplerate, uint8(channels)}
-	psb.Stream, err = pulse.NewStream("", name, dir, device, "", spec, nil, bufAttr)
+	psb.Stream, err = pulse.NewStream("", name, dir, device, "", spec, nil, nil)
 	return
 }
 
