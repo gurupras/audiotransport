@@ -29,7 +29,7 @@ type ArgsConfig struct {
 }
 
 func setupParser(app *kingpin.Application) {
-	name = kingpin.Flag("name", "program name. This is used as filename in FILE method").Short('n').Required().String()
+	name = app.Flag("name", "program name. This is used as filename in FILE method").Short('n').Required().String()
 	addr = app.Arg("receiver-address", "Address of receiver").Required().String()
 	proto = app.Flag("protocol", "tcp/udp").Short('P').Default("udp").String()
 	device = app.Flag("device", "Device from which to capture and transmit").Short('d').String()
