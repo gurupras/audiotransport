@@ -21,7 +21,7 @@ func (psb *PulseSimpleBackend) Init(name, device string, samplerate, channels ui
 	}
 
 	bufAttr := pulse.NewBufferAttr()
-	bufAttr.Fragsize = psb.Backend.GetBufferSize()
+	bufAttr.Fragsize = psb.Backend.GetBufferSize() * 5
 	bufAttr.Maxlength = psb.Backend.GetBufferSize() * 4
 	bufAttr.Tlength = bufAttr.Maxlength / 2
 	bufAttr.Minreq = psb.Backend.GetBufferSize() / 4
